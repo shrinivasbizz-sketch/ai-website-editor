@@ -460,7 +460,7 @@
 
   var PROVIDERS = [
     { id: "groq",       name: "Groq",         badge: "Free",       model: "llama-3.3-70b-versatile",              base: "https://api.groq.com/openai/v1" },
-    { id: "openrouter", name: "OpenRouter",    badge: "Free models",model: "meta-llama/llama-3.1-8b-instruct:free",base: "https://openrouter.ai/api/v1" },
+    { id: "openrouter", name: "OpenRouter",    badge: "Free models",model: "google/gemma-4-31b-it:free",base: "https://openrouter.ai/api/v1" },
     { id: "gemini",     name: "Gemini",        badge: "Free tier",  model: "gemini-2.0-flash",                     base: "https://generativelanguage.googleapis.com/v1beta/openai" },
     { id: "openai",     name: "OpenAI",        badge: "",           model: "gpt-4o-mini",                          base: "https://api.openai.com/v1" },
     { id: "anthropic",  name: "Anthropic",     badge: "",           model: "claude-haiku-4-5-20251001",            base: "" },

@@ -45,7 +45,7 @@ function detectDirectProvider(): { client: OpenAI; model: string } | null {
   if (process.env.OPENROUTER_API_KEY) {
     return {
       client: new OpenAI({ apiKey: process.env.OPENROUTER_API_KEY, baseURL: "https://openrouter.ai/api/v1" }),
-      model: process.env.OPENROUTER_MODEL ?? "meta-llama/llama-3.1-8b-instruct:free",
+      model: process.env.OPENROUTER_MODEL ?? "google/gemma-4-31b-it:free",
     };
   }
   return null;

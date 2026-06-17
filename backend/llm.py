@@ -34,7 +34,7 @@ def config_from_env() -> LLMConfig:
         return LLMConfig(
             provider="openrouter",
             api_key=os.getenv("OPENROUTER_API_KEY", ""),
-            model=os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.1-8b-instruct:free"),
+            model=os.getenv("OPENROUTER_MODEL", "google/gemma-4-31b-it:free"),
             base_url="https://openrouter.ai/api/v1",
         )
     if os.getenv("ANTHROPIC_API_KEY"):
@@ -92,17 +92,20 @@ def resolve_config(raw: dict | None) -> LLMConfig:
 
 # ── Core chat function ─────────────────────────────────────────────────────────
 
+_JSON_MODE_PROVIDERS = {"groq", "openai", "gemini"}  # providers that reliably support response_format
+
 async def chat(messages: list[dict], cfg: LLMConfig, json_mode: bool = False) -> str:
     """
     Single LLM call with the given config. Returns the assistant's text.
+    json_mode is only applied for providers that reliably support response_format.
     """
+    effective_json_mode = json_mode and cfg.provider in _JSON_MODE_PROVIDERS
     if cfg.provider == "anthropic":
         return await _anthropic_chat(messages, cfg)
     elif cfg.provider == "ollama":
-        return await _ollama_chat(messages, cfg, json_mode)
+        return await _ollama_chat(messages, cfg, effective_json_mode)
     else:
-        # All others: Groq, OpenAI, Gemini, OpenRouter, Custom — all OpenAI-compatible
-        return await _openai_chat(messages, cfg, json_mode)
+        return await _openai_chat(messages, cfg, effective_json_mode)
 
 
 async def _openai_chat(messages: list[dict], cfg: LLMConfig, json_mode: bool) -> str:
