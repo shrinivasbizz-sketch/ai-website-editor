@@ -2,15 +2,30 @@
 
 > Click any element on any website. Describe a change in plain English. Watch it happen.
 
+[![MIT License](https://img.shields.io/badge/license-MIT-7c3aed)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3b82f6)](backend/requirements.txt)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-15803d)](backend/requirements.txt)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-black)](package.json)
+[![Docker](https://img.shields.io/badge/docker-ready-2563eb)](docker-compose.yml)
+[![BYOK](https://img.shields.io/badge/BYOK-bring%20your%20own%20key-f59e0b)](README.md)
+
 Open-source visual AI editor that works on **any website** via a single `<script>` tag.
 No account. No subscription. Bring your own free API key.
+
+---
+
+## Demo
+
+![AI Website Editor — click any element, edit with natural language](public/demo.svg)
+
+> **What you see above:** Edit Mode is active (top toolbar). A `h1` heading is selected (purple outline). The right panel shows the AI agent's 3-step pipeline (analyze → plan → generate) and the proposed change. Click **Apply** to patch the live DOM — or **Reject** to discard.
 
 ---
 
 ## ✦ Quick Start (one command)
 
 ```bash
-git clone https://github.com/yourname/ai-website-editor
+git clone https://github.com/shrinivasbizz-sketch/ai-website-editor
 cd ai-website-editor/backend
 pip install -r requirements.txt
 python main.py
@@ -80,18 +95,21 @@ docker compose up --build
 ### Bookmarklet (no code changes needed)
 
 Visit `http://localhost:8000` and drag **✏ AI Editor** to your bookmarks bar.
+Works on any website without touching its source code.
 
 ---
 
 ## Features
 
 - Works on any website — React, Vue, Next.js, plain HTML, WordPress, anything
-- Visual element selection with hover preview
+- Visual element selection with hover preview and purple highlight
 - Natural language editing — "make this button red and add shadow"
-- Live DOM preview before applying
-- Undo/redo with full revision history
-- Tailwind CSS aware — preserves responsive prefixes
-- BYOK — each user brings their own free API key
+- Live DOM preview before applying changes
+- Undo/redo with full revision history panel
+- Tailwind CSS aware — preserves responsive prefixes (sm:, md:, lg:)
+- BYOK — each user brings their own free API key, stored only in their browser
+- 3-step agent pipeline with retry and validation
+- React component name detection via fiber walk
 - No account, no subscription, self-hostable
 - MIT licensed
 
@@ -102,31 +120,50 @@ Visit `http://localhost:8000` and drag **✏ AI Editor** to your bookmarks bar.
 ```
 backend/            ← Python agent (standalone — the core product)
   main.py           ← FastAPI + serves inject.js + setup page
-  agent.py          ← 3-step AI pipeline
+  agent.py          ← 3-step AI pipeline (analyze → plan → generate)
   llm.py            ← Multi-provider abstraction (BYOK)
-  static/inject.js  ← Universal client script
+  static/inject.js  ← Universal client script (~500 lines, zero deps)
   Dockerfile
-  railway.toml
+  railway.toml      ← One-click Railway deploy
 
-editor/             ← Optional Next.js rich UI
-  app/
-  components/editor/
-  store/
+app/                ← Optional Next.js rich UI
+  page.tsx          ← Demo SaaS landing page (FlowCraft)
+  api/editor/       ← API route → Python agent with direct LLM fallback
+components/editor/  ← EditModeOverlay, EditPanel, HistoryPanel
+store/              ← Zustand stores (provider config, editor state)
+public/
+  demo.svg          ← UI mockup (this README's screenshot)
 ```
 
 The Python `backend/` is the complete standalone product.
-The `editor/` Next.js app is optional and adds a richer interface.
+The Next.js app is optional and adds a richer browser-based interface.
 
 ---
 
 ## API
 
 ```
-GET  /              Setup & onboarding page
+GET  /              Setup & onboarding page (get your script tag here)
 GET  /inject.js     Universal client script
 GET  /health        Health check
-POST /generate      AI editing (BYOK)
-GET  /api/docs      Swagger docs
+POST /generate      AI editing endpoint (BYOK)
+GET  /api/docs      Swagger / OpenAPI docs
+```
+
+**POST /generate payload:**
+```json
+{
+  "prompt": "make this heading blue and larger",
+  "elementHtml": "<h1 class=\"text-6xl font-extrabold\">Hello</h1>",
+  "outerHtml": "<section class=\"hero\">...</section>",
+  "classes": ["text-6xl", "font-extrabold"],
+  "tag": "h1",
+  "providerConfig": {
+    "provider": "groq",
+    "apiKey": "gsk_...",
+    "model": "llama-3.3-70b-versatile"
+  }
+}
 ```
 
 ---
@@ -134,45 +171,16 @@ GET  /api/docs      Swagger docs
 ## Contributing
 
 PRs welcome. Fork → branch → PR.
-Areas for contribution: more providers, file export, browser extension, VS Code plugin.
+
+**Good first issues:**
+- Add a new AI provider to `backend/llm.py`
+- Export edited page as static HTML/CSS file
+- Browser extension (Chrome/Firefox) wrapper for `inject.js`
+- VS Code plugin integration
+- Test suite for the agent pipeline
 
 ---
 
 ## License
 
-MIT
-
----
-
-## Next.js dev server (optional rich UI)
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[MIT](LICENSE) — free to use, modify, and deploy commercially.
