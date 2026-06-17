@@ -584,8 +584,17 @@
 
   // ── Edit mode toggle ───────────────────────────────────────────────────────
 
+  function ensureTailwindCdn() {
+    if (document.getElementById("__ae-tw-cdn")) return;
+    var s = document.createElement("script");
+    s.id = "__ae-tw-cdn";
+    s.src = "https://cdn.tailwindcss.com";
+    document.head.appendChild(s);
+  }
+
   editBtn.addEventListener("click", function() {
     S.editMode = !S.editMode;
+    if (S.editMode) ensureTailwindCdn();
     overlay.classList.toggle("on", S.editMode);
     editBtn.classList.toggle("on", S.editMode);
     editBtn.textContent = S.editMode ? "✕ Exit Edit Mode" : "⊕ Edit Mode";
