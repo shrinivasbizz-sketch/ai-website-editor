@@ -1,5 +1,19 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Python
+backend/.venv/
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+*.db
+*.sqlite
+
+# Secrets — never commit
+.env
+.env.local
+.env.production
+backend/.env
+
 # dependencies
 /node_modules
 /.pnp
@@ -30,8 +44,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files — real secrets, never commit
+.env
+.env.local
+.env.production
+.env.development.local
+.env.test.local
+.env.production.local
+# .env.example is intentionally NOT ignored (it's a safe template)
 
 # vercel
 .vercel

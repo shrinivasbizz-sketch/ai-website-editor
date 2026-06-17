@@ -1,0 +1,37 @@
+services:
+  # Python AI agent — handles all LLM calls
+  agent:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Next.js editor UI — serves inject.js + editor frontend
+  editor:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_AGENT_URL: http://agent:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - AGENT_BACKEND_URL=http://agent:8000
+    depends_on:
+      agent:
+        condition: service_healthy
+    restart: unless-stopped
+
+# Usage:
+#   docker compose up --build
+#
+# Then anyone on your network can open:
+#   http://<YOUR_IP>:3000          → Editor UI
+#   http://<YOUR_IP>:3000/setup    → Get the script tag / bookmarklet
+#   http://<YOUR_IP>:8000          → Python agent API
