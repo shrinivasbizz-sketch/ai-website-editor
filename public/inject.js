@@ -465,6 +465,7 @@
     { id: "openai",     name: "OpenAI",        badge: "",           model: "gpt-4o-mini",                          base: "https://api.openai.com/v1" },
     { id: "anthropic",  name: "Anthropic",     badge: "",           model: "claude-haiku-4-5-20251001",            base: "" },
     { id: "ollama",     name: "Ollama (local)",badge: "No key",     model: "llama3.2",                             base: "http://localhost:11434" },
+    { id: "claude-cli", name: "Claude Code",   badge: "CLI · No key",model: "claude-sonnet-4-6",                   base: "" },
   ];
 
   function openSettings() {
@@ -528,7 +529,7 @@
       });
       var p = PROVIDERS.find(function(x){ return x.id === selProvider; }) || PROVIDERS[0];
       var isOllama = selProvider === "ollama" || selProvider === "custom";
-      document.getElementById("__ae-key-field").style.display = p.id === "ollama" ? "none" : "";
+      document.getElementById("__ae-key-field").style.display = (p.id === "ollama" || p.id === "claude-cli") ? "none" : "";
       document.getElementById("__ae-url-field").style.display = isOllama ? "" : "none";
       if (!document.getElementById("__ae-model-input").value) {
         document.getElementById("__ae-model-input").value = p.model;

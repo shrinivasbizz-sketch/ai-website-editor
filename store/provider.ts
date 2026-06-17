@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export interface ProviderConfig {
-  provider: string;   // groq | openai | anthropic | gemini | openrouter | ollama | custom
+  provider: string;   // groq | openai | anthropic | gemini | openrouter | ollama | claude-cli | custom
   apiKey: string;
   model: string;
   baseUrl: string;    // only for ollama / custom
@@ -81,6 +81,17 @@ export const PROVIDERS = [
     requiresKey: false,
     models: ["llama3.2", "llama3.1", "mistral", "codellama", "phi3"],
     hint: "Install from ollama.com then run: ollama pull llama3.2",
+  },
+  {
+    id: "claude-cli",
+    name: "Claude Code CLI",
+    badge: "Pro/Max — no key",
+    badgeColor: "text-orange-400",
+    defaultModel: "claude-sonnet-4-6",
+    baseUrl: "",
+    requiresKey: false,
+    models: ["claude-sonnet-4-6", "claude-opus-4-8", "claude-haiku-4-5-20251001"],
+    hint: "Uses your local Claude Code CLI — no API key needed. Install: npm i -g @anthropic-ai/claude-code",
   },
   {
     id: "custom",

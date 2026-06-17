@@ -4,6 +4,9 @@ The caller passes provider + api_key + model + base_url in every request.
 Falls back to .env values if no per-request config is provided.
 """
 import os
+import asyncio
+import subprocess
+import sys
 import json
 import re
 import httpx
@@ -84,7 +87,7 @@ def resolve_config(raw: dict | None) -> LLMConfig:
     base_url = raw.get("baseUrl", "") or raw.get("base_url", "") or _BASE_URLS.get(provider, "")
 
     # If the user hasn't configured a key yet, try env fallback
-    if not api_key and provider not in ("ollama", "custom"):
+    if not api_key and provider not in ("ollama", "custom", "claude-cli"):
         return config_from_env()
 
     return LLMConfig(provider=provider, api_key=api_key, model=model, base_url=base_url)
@@ -100,12 +103,58 @@ async def chat(messages: list[dict], cfg: LLMConfig, json_mode: bool = False) ->
     json_mode is only applied for providers that reliably support response_format.
     """
     effective_json_mode = json_mode and cfg.provider in _JSON_MODE_PROVIDERS
-    if cfg.provider == "anthropic":
+    if cfg.provider == "claude-cli":
+        return await _claude_cli_chat(messages, cfg)
+    elif cfg.provider == "anthropic":
         return await _anthropic_chat(messages, cfg)
     elif cfg.provider == "ollama":
         return await _ollama_chat(messages, cfg, effective_json_mode)
     else:
         return await _openai_chat(messages, cfg, effective_json_mode)
+
+
+async def _claude_cli_chat(messages: list[dict], cfg: LLMConfig) -> str:
+    """Use the local `claude` CLI (Claude Code). No API key required — uses the
+    user's existing Claude Code / Pro / Max authentication.
+
+    On Windows, claude is a .cmd wrapper so we need shell=True.
+    We pass the prompt via stdin (not as a -p argument) to avoid
+    command-line length limits and shell-escaping issues.
+    """
+    system = ""
+    user = ""
+    for m in messages:
+        if m["role"] == "system":
+            system = m["content"]
+        elif m["role"] == "user":
+            user = m["content"]
+
+    full_prompt = f"{system}\n\n{user}" if system else user
+
+    # Sanitize model name to prevent shell injection when shell=True
+    safe_model = re.sub(r"[^a-zA-Z0-9\-\._:/]", "", cfg.model or "")
+    cmd = f"claude --model {safe_model} -p" if safe_model else "claude -p"
+
+    def _run() -> subprocess.CompletedProcess:
+        return subprocess.run(
+            cmd,
+            input=full_prompt,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            shell=True,  # required on Windows for .cmd wrappers; also works on Unix
+        )
+
+    loop = asyncio.get_event_loop()
+    try:
+        result = await asyncio.wait_for(loop.run_in_executor(None, _run), timeout=125)
+    except (asyncio.TimeoutError, subprocess.TimeoutExpired):
+        raise Exception("Claude CLI timed out after 120s")
+
+    if result.returncode != 0:
+        raise Exception(f"Claude CLI error: {result.stderr.strip() or 'non-zero exit'}")
+
+    return result.stdout.strip()
 
 
 async def _openai_chat(messages: list[dict], cfg: LLMConfig, json_mode: bool) -> str:
